@@ -6,14 +6,27 @@ import { Footer } from "@/components/Footer";
 import { Providers } from "@/components/providers";
 
 export const metadata: Metadata = {
-  title: "Pokédex · Built by Alan Teixidó",
+  title: "Pokédex | Built by Alan Teixidó",
   description:
-    "A production-grade Pokédex app. Browse, search and compare all Pokémon with rich stats, evolutions and type matchups.",
+    "Full-featured Pokédex with 1025 Pokémon. Search by name, filter by type and generation, view stats, evolution chains, and compare Pokémon side by side.",
+  keywords: ["pokédex", "pokémon", "pokeapi", "stats", "evolution"],
   authors: [{ name: "Alan Teixidó", url: "https://alanteixido.dev/" }],
+  robots: { index: true, follow: true },
+  alternates: {
+    canonical: "https://pokedex.alanteixido.dev",
+  },
   openGraph: {
-    title: "Pokédex · Built by Alan Teixidó",
-    description: "Browse, search and compare all 1025 Pokémon.",
+    title: "Pokédex | Built by Alan Teixidó",
+    description:
+      "Full-featured Pokédex with 1025 Pokémon. Search by name, filter by type and generation, view stats, evolution chains, and compare Pokémon side by side.",
+    url: "https://pokedex.alanteixido.dev",
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Pokédex | Built by Alan Teixidó",
+    description:
+      "Full-featured Pokédex with 1025 Pokémon. Search by name, filter by type and generation, view stats, evolution chains, and compare Pokémon side by side.",
   },
 };
 
