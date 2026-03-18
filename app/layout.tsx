@@ -41,10 +41,14 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // suppressHydrationWarning: the anti-FOUC script mutates the class list
+  // before React hydrates, so the server-rendered "dark" class may differ
+  // from what the browser sees. This is the recommended pattern for theme
+  // toggles in Next.js App Router.
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className="dark" suppressHydrationWarning>
       <head>
-        {/* Anti-FOUC: apply theme class before paint */}
+        {/* Anti-FOUC: apply theme class before first paint */}
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem('theme');if(t==='light'){document.documentElement.classList.remove('dark');document.documentElement.classList.add('light');}}catch(e){}})();`,
