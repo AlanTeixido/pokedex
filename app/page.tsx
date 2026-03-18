@@ -1,65 +1,204 @@
-import Image from "next/image";
+"use client";
+import { useState, useMemo, useCallback } from "react";
+import useSWR from "swr";
+import { motion } from "framer-motion";
+import { FilterBar } from "@/components/FilterBar";
+import { PokemonGrid } from "@/components/PokemonGrid";
+import { Pagination } from "@/components/Pagination";
+import { SkeletonGrid } from "@/components/SkeletonCard";
+import { fetchAllPokemonList, fetchPokemonByType } from "@/lib/api";
+import { GENERATIONS, PAGE_SIZE, TOTAL_POKEMON } from "@/lib/constants";
 
-export default function Home() {
+type SortOption = "id" | "name";
+
+interface PokemonEntry {
+  name: string;
+  id: number;
+}
+
+export default function HomePage() {
+  const [search, setSearch] = useState("");
+  const [selectedType, setSelectedType] = useState("");
+  const [selectedGen, setSelectedGen] = useState(0);
+  const [sort, setSort] = useState<SortOption>("id");
+  const [page, setPage] = useState(1);
+
+  // Fetch all pokemon list
+  const { data: allPokemon, isLoading: listLoading } = useSWR<PokemonEntry[]>(
+    "all-pokemon-list",
+    fetchAllPokemonList
+  );
+
+  // Fetch type filter list
+  const { data: typeList } = useSWR<string[]>(
+    selectedType ? `type-${selectedType}` : null,
+    () => fetchPokemonByType(selectedType)
+  );
+
+  const typeSet = useMemo(
+    () => (typeList ? new Set(typeList) : null),
+    [typeList]
+  );
+
+  const genRange = useMemo(
+    () => GENERATIONS.find((g) => g.id === selectedGen)?.range ?? null,
+    [selectedGen]
+  );
+
+  const filteredPokemon = useMemo(() => {
+    if (!allPokemon) return [];
+
+    let list = allPokemon;
+
+    // Gen filter (by ID range)
+    if (genRange) {
+      list = list.filter((p) => p.id >= genRange[0] && p.id <= genRange[1]);
+    }
+
+    // Type filter
+    if (typeSet) {
+      list = list.filter((p) => typeSet.has(p.name));
+    }
+
+    // Search filter
+    if (search.trim()) {
+      const q = search.toLowerCase().trim();
+      list = list.filter(
+        (p) =>
+          p.name.includes(q) ||
+          String(p.id).includes(q) ||
+          String(p.id).padStart(4, "0").includes(q)
+      );
+    }
+
+    // Sort
+    if (sort === "name") {
+      list = [...list].sort((a, b) => a.name.localeCompare(b.name));
+    } else {
+      list = [...list].sort((a, b) => a.id - b.id);
+    }
+
+    return list;
+  }, [allPokemon, genRange, typeSet, search, sort]);
+
+  const totalPages = Math.ceil(filteredPokemon.length / PAGE_SIZE);
+  const currentPagePokemon = useMemo(
+    () => filteredPokemon.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map((p) => p.name),
+    [filteredPokemon, page]
+  );
+
+  const handleSearch = useCallback((v: string) => { setSearch(v); setPage(1); }, []);
+  const handleType   = useCallback((v: string) => { setSelectedType(v); setPage(1); }, []);
+  const handleGen    = useCallback((v: number) => { setSelectedGen(v); setPage(1); }, []);
+  const handleSort   = useCallback((v: string) => { setSort(v as SortOption); setPage(1); }, []);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="min-h-screen hex-bg">
+      {/* Hero Header */}
+      <div
+        className="relative overflow-hidden"
+        style={{
+          background: "linear-gradient(180deg,rgba(13,18,32,0.9) 0%,transparent 100%)",
+          paddingTop: "3rem",
+          paddingBottom: "2.5rem",
+        }}
+      >
+        {/* Decorative orbs */}
+        <div
+          className="absolute top-0 left-1/4 w-96 h-96 rounded-full blur-3xl pointer-events-none"
+          style={{ background: "rgba(99,102,241,0.08)", transform: "translateY(-50%)" }}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+        <div
+          className="absolute top-0 right-1/4 w-96 h-96 rounded-full blur-3xl pointer-events-none"
+          style={{ background: "rgba(139,92,246,0.06)", transform: "translateY(-50%)" }}
+        />
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+            <div
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold mb-4 tracking-widest uppercase"
+              style={{
+                background: "rgba(99,102,241,0.12)",
+                border: "1px solid rgba(99,102,241,0.25)",
+                color: "#a78bfa",
+              }}
+            >
+              <span
+                className="w-1.5 h-1.5 rounded-full animate-pulse-glow"
+                style={{ background: "#a78bfa" }}
+              />
+              {TOTAL_POKEMON} Pokémon · Gen I–IX
+            </div>
+
+            <h1
+              className="font-display text-5xl sm:text-6xl lg:text-7xl font-black mb-4 tracking-wider"
+              style={{
+                background: "linear-gradient(135deg,#f0f4ff 0%,#a78bfa 50%,#38bdf8 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}
+            >
+              POKÉDEX
+            </h1>
+
+            <p className="text-base sm:text-lg max-w-xl mx-auto" style={{ color: "#8b9ab8" }}>
+              Explore every Pokémon from every generation. Search, filter, compare and discover.
+            </p>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        {/* Filter Bar */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+          className="mb-8"
+        >
+          <div
+            className="p-5 rounded-2xl"
+            style={{
+              background: "rgba(13,18,32,0.8)",
+              border: "1px solid rgba(255,255,255,0.07)",
+              backdropFilter: "blur(12px)",
+            }}
+          >
+            <FilterBar
+              search={search}          onSearch={handleSearch}
+              selectedType={selectedType} onType={handleType}
+              selectedGen={selectedGen}   onGen={handleGen}
+              sort={sort}               onSort={handleSort}
+              total={allPokemon?.length ?? TOTAL_POKEMON}
+              filtered={filteredPokemon.length}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+          </div>
+        </motion.div>
+
+        {/* Type loading state */}
+        {selectedType && !typeSet && (
+          <div className="mb-6 flex items-center gap-2" style={{ color: "#8b9ab8" }}>
+            <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+            <span className="text-sm">Loading {selectedType} type Pokémon…</span>
+          </div>
+        )}
+
+        {/* Grid */}
+        {listLoading ? (
+          <SkeletonGrid count={20} />
+        ) : (
+          <>
+            <PokemonGrid names={currentPagePokemon} />
+            <Pagination page={page} totalPages={totalPages} onPage={setPage} />
+          </>
+        )}
+      </div>
     </div>
   );
 }
