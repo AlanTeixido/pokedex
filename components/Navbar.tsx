@@ -16,12 +16,19 @@ export function Navbar() {
 
   return (
     <header className="fixed top-0 inset-x-0 z-50">
+      {/* Accent line at very top */}
+      <div
+        className="absolute top-0 left-0 right-0 h-[1px] pointer-events-none"
+        style={{ background: "linear-gradient(90deg, transparent, rgba(99,102,241,0.6), rgba(167,139,250,0.6), rgba(56,189,248,0.4), transparent)" }}
+      />
       <div
         className="relative"
         style={{
           background: "var(--navbar-bg)",
           borderBottom: "1px solid var(--navbar-border)",
-          backdropFilter: "blur(16px)",
+          backdropFilter: "blur(24px)",
+          WebkitBackdropFilter: "blur(24px)",
+          boxShadow: "0 1px 0 rgba(255,255,255,0.04), 0 4px 32px rgba(0,0,0,0.25)",
         }}
       >
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
