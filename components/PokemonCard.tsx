@@ -1,5 +1,5 @@
 "use client";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
@@ -7,6 +7,7 @@ import { Pokemon } from "@/lib/types";
 import { TypeBadge } from "./TypeBadge";
 import { getPrimaryTypeColor } from "@/lib/typeColors";
 import { formatPokemonId, formatName, getPokemonAnimatedUrl, getPokemonSpriteUrl } from "@/lib/api";
+import { useFavorites } from "./FavoritesProvider";
 
 interface PokemonCardProps {
   pokemon: Pokemon;
@@ -15,9 +16,21 @@ interface PokemonCardProps {
 
 export function PokemonCard({ pokemon, index = 0 }: PokemonCardProps) {
   const [imgError, setImgError] = useState(false);
+  const [heartAnim, setHeartAnim] = useState(false);
+  const { isFavorite, toggleFavorite } = useFavorites();
+
   const primaryColor = getPrimaryTypeColor(pokemon.types);
   const animatedUrl = getPokemonAnimatedUrl(pokemon.id);
   const staticUrl = getPokemonSpriteUrl(pokemon.id);
+  const favorited = isFavorite(pokemon.name);
+
+  function handleFavorite(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleFavorite(pokemon.name);
+    setHeartAnim(true);
+    setTimeout(() => setHeartAnim(false), 350);
+  }
 
   return (
     <motion.div
@@ -30,9 +43,9 @@ export function PokemonCard({ pokemon, index = 0 }: PokemonCardProps) {
         <div
           className="relative overflow-hidden rounded-2xl p-5 flex flex-col items-center gap-2 cursor-pointer transition-all duration-300 pokeball-decor"
           style={{
-            background: `linear-gradient(145deg, rgba(17,24,39,0.95) 0%, ${primaryColor.darkBg}88 100%)`,
+            background: `linear-gradient(145deg, var(--bg-card) 0%, ${primaryColor.darkBg}66 100%)`,
             border: `1px solid ${primaryColor.hex}22`,
-            boxShadow: `0 0 0 1px rgba(255,255,255,0.04)`,
+            boxShadow: `0 0 0 1px var(--border-subtle)`,
           }}
           onMouseEnter={(e) => {
             (e.currentTarget as HTMLDivElement).style.boxShadow =
@@ -40,9 +53,25 @@ export function PokemonCard({ pokemon, index = 0 }: PokemonCardProps) {
           }}
           onMouseLeave={(e) => {
             (e.currentTarget as HTMLDivElement).style.boxShadow =
-              `0 0 0 1px rgba(255,255,255,0.04)`;
+              `0 0 0 1px var(--border-subtle)`;
           }}
         >
+          {/* Favorites button */}
+          <button
+            onClick={handleFavorite}
+            className={`absolute top-2.5 right-2.5 z-20 w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200 ${heartAnim ? "heart-pop" : ""}`}
+            style={{
+              background: favorited ? "rgba(239,68,68,0.15)" : "rgba(128,128,128,0.1)",
+              border: favorited ? "1px solid rgba(239,68,68,0.3)" : "1px solid var(--border-subtle)",
+              color: favorited ? "#ef4444" : "var(--text-muted)",
+            }}
+            aria-label={favorited ? "Remove from favourites" : "Add to favourites"}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill={favorited ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2.5">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
+          </button>
+
           {/* ID badge */}
           <div
             className="self-start text-xs font-bold font-display"
@@ -53,13 +82,11 @@ export function PokemonCard({ pokemon, index = 0 }: PokemonCardProps) {
 
           {/* Sprite */}
           <div className="relative w-24 h-24 flex items-center justify-center">
-            {/* Glow disc */}
             <div
               className="absolute inset-2 rounded-full blur-xl opacity-30 group-hover:opacity-50 transition-opacity"
               style={{ background: primaryColor.hex }}
             />
             {!imgError ? (
-              // Try animated sprite
               <Image
                 src={animatedUrl}
                 alt={pokemon.name}
@@ -86,7 +113,7 @@ export function PokemonCard({ pokemon, index = 0 }: PokemonCardProps) {
           {/* Name */}
           <h3
             className="text-sm font-bold tracking-wide capitalize text-center"
-            style={{ color: "#f0f4ff", letterSpacing: "0.04em" }}
+            style={{ color: "var(--text-primary)", letterSpacing: "0.04em" }}
           >
             {formatName(pokemon.name)}
           </h3>

@@ -3,7 +3,6 @@ import useSWR from "swr";
 import { Pokemon } from "@/lib/types";
 import { fetchPokemon } from "@/lib/api";
 import { PokemonCard } from "./PokemonCard";
-import { SkeletonGrid } from "./SkeletonCard";
 
 interface PokemonGridProps {
   names: string[];
@@ -19,7 +18,7 @@ function PokemonCardLoader({ name, index }: { name: string; index: number }) {
   if (!data) return (
     <div
       className="relative overflow-hidden rounded-2xl p-5 flex flex-col items-center gap-3"
-      style={{ background: "rgba(17,24,39,0.8)", border: "1px solid rgba(255,255,255,0.06)" }}
+      style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}
     >
       <div className="skeleton h-3 w-12 self-start" />
       <div className="skeleton w-24 h-24 rounded-full" />
@@ -38,10 +37,10 @@ export function PokemonGrid({ names }: PokemonGridProps) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-4">
         <div className="text-6xl opacity-30">🔍</div>
-        <p className="text-xl font-display" style={{ color: "#4a5568" }}>
+        <p className="text-xl font-display" style={{ color: "var(--text-muted)" }}>
           No Pokémon found
         </p>
-        <p className="text-sm" style={{ color: "#4a5568" }}>
+        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
           Try adjusting your search or filters
         </p>
       </div>

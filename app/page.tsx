@@ -1,15 +1,19 @@
 "use client";
 import { useState, useMemo, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import useSWR from "swr";
-import { motion } from "framer-motion";
+import { HeroSection } from "@/components/HeroSection";
 import { FilterBar } from "@/components/FilterBar";
 import { PokemonGrid } from "@/components/PokemonGrid";
+import { ListView } from "@/components/ListView";
 import { Pagination } from "@/components/Pagination";
 import { SkeletonGrid } from "@/components/SkeletonCard";
 import { fetchAllPokemonList, fetchPokemonByType } from "@/lib/api";
 import { GENERATIONS, PAGE_SIZE, TOTAL_POKEMON } from "@/lib/constants";
+import { useFavorites } from "@/components/FavoritesProvider";
 
 type SortOption = "id" | "name";
+type ViewMode = "grid" | "list";
 
 interface PokemonEntry {
   name: string;
@@ -17,13 +21,17 @@ interface PokemonEntry {
 }
 
 export default function HomePage() {
-  const [search, setSearch] = useState("");
+  const [search, setSearch]           = useState("");
   const [selectedType, setSelectedType] = useState("");
-  const [selectedGen, setSelectedGen] = useState(0);
-  const [sort, setSort] = useState<SortOption>("id");
-  const [page, setPage] = useState(1);
+  const [selectedGen, setSelectedGen]   = useState(0);
+  const [sort, setSort]               = useState<SortOption>("id");
+  const [page, setPage]               = useState(1);
+  const [showFavorites, setShowFavorites] = useState(false);
+  const [viewMode, setViewMode]       = useState<ViewMode>("grid");
 
-  // Fetch all pokemon list
+  const { favorites } = useFavorites();
+
+  // Fetch full Pokémon list
   const { data: allPokemon, isLoading: listLoading } = useSWR<PokemonEntry[]>(
     "all-pokemon-list",
     fetchAllPokemonList
@@ -50,7 +58,7 @@ export default function HomePage() {
 
     let list = allPokemon;
 
-    // Gen filter (by ID range)
+    // Gen filter
     if (genRange) {
       list = list.filter((p) => p.id >= genRange[0] && p.id <= genRange[1]);
     }
@@ -60,7 +68,12 @@ export default function HomePage() {
       list = list.filter((p) => typeSet.has(p.name));
     }
 
-    // Search filter
+    // Favourites filter
+    if (showFavorites) {
+      list = list.filter((p) => favorites.has(p.name));
+    }
+
+    // Search
     if (search.trim()) {
       const q = search.toLowerCase().trim();
       list = list.filter(
@@ -79,7 +92,7 @@ export default function HomePage() {
     }
 
     return list;
-  }, [allPokemon, genRange, typeSet, search, sort]);
+  }, [allPokemon, genRange, typeSet, showFavorites, favorites, search, sort]);
 
   const totalPages = Math.ceil(filteredPokemon.length / PAGE_SIZE);
   const currentPagePokemon = useMemo(
@@ -87,74 +100,20 @@ export default function HomePage() {
     [filteredPokemon, page]
   );
 
-  const handleSearch = useCallback((v: string) => { setSearch(v); setPage(1); }, []);
-  const handleType   = useCallback((v: string) => { setSelectedType(v); setPage(1); }, []);
-  const handleGen    = useCallback((v: number) => { setSelectedGen(v); setPage(1); }, []);
-  const handleSort   = useCallback((v: string) => { setSort(v as SortOption); setPage(1); }, []);
+  const handleSearch    = useCallback((v: string) => { setSearch(v);            setPage(1); }, []);
+  const handleType      = useCallback((v: string) => { setSelectedType(v);      setPage(1); }, []);
+  const handleGen       = useCallback((v: number) => { setSelectedGen(v);       setPage(1); }, []);
+  const handleSort      = useCallback((v: string) => { setSort(v as SortOption); setPage(1); }, []);
+  const handleFavorites = useCallback((v: boolean) => { setShowFavorites(v);    setPage(1); }, []);
 
   return (
     <div className="min-h-screen hex-bg">
-      {/* Hero Header */}
-      <div
-        className="relative overflow-hidden"
-        style={{
-          background: "linear-gradient(180deg,rgba(13,18,32,0.9) 0%,transparent 100%)",
-          paddingTop: "3rem",
-          paddingBottom: "2.5rem",
-        }}
-      >
-        {/* Decorative orbs */}
-        <div
-          className="absolute top-0 left-1/4 w-96 h-96 rounded-full blur-3xl pointer-events-none"
-          style={{ background: "rgba(99,102,241,0.08)", transform: "translateY(-50%)" }}
-        />
-        <div
-          className="absolute top-0 right-1/4 w-96 h-96 rounded-full blur-3xl pointer-events-none"
-          style={{ background: "rgba(139,92,246,0.06)", transform: "translateY(-50%)" }}
-        />
-
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <div
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold mb-4 tracking-widest uppercase"
-              style={{
-                background: "rgba(99,102,241,0.12)",
-                border: "1px solid rgba(99,102,241,0.25)",
-                color: "#a78bfa",
-              }}
-            >
-              <span
-                className="w-1.5 h-1.5 rounded-full animate-pulse-glow"
-                style={{ background: "#a78bfa" }}
-              />
-              {TOTAL_POKEMON} Pokémon · Gen I–IX
-            </div>
-
-            <h1
-              className="font-display text-5xl sm:text-6xl lg:text-7xl font-black mb-4 tracking-wider"
-              style={{
-                background: "linear-gradient(135deg,#f0f4ff 0%,#a78bfa 50%,#38bdf8 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
-            >
-              POKÉDEX
-            </h1>
-
-            <p className="text-base sm:text-lg max-w-xl mx-auto" style={{ color: "#8b9ab8" }}>
-              Explore every Pokémon from every generation. Search, filter, compare and discover.
-            </p>
-          </motion.div>
-        </div>
-      </div>
+      {/* Enhanced Hero */}
+      <HeroSection search={search} onSearch={handleSearch} />
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 pt-8">
+
         {/* Filter Bar */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -165,8 +124,8 @@ export default function HomePage() {
           <div
             className="p-5 rounded-2xl"
             style={{
-              background: "rgba(13,18,32,0.8)",
-              border: "1px solid rgba(255,255,255,0.07)",
+              background: "var(--bg-filter)",
+              border: "1px solid var(--border-subtle)",
               backdropFilter: "blur(12px)",
             }}
           >
@@ -177,24 +136,40 @@ export default function HomePage() {
               sort={sort}               onSort={handleSort}
               total={allPokemon?.length ?? TOTAL_POKEMON}
               filtered={filteredPokemon.length}
+              showFavorites={showFavorites} onFavorites={handleFavorites}
+              viewMode={viewMode}       onViewMode={setViewMode}
             />
           </div>
         </motion.div>
 
         {/* Type loading state */}
         {selectedType && !typeSet && (
-          <div className="mb-6 flex items-center gap-2" style={{ color: "#8b9ab8" }}>
+          <div className="mb-6 flex items-center gap-2" style={{ color: "var(--text-secondary)" }}>
             <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
             <span className="text-sm">Loading {selectedType} type Pokémon…</span>
           </div>
         )}
 
-        {/* Grid */}
+        {/* Pokémon list / grid */}
         {listLoading ? (
           <SkeletonGrid count={20} />
         ) : (
           <>
-            <PokemonGrid names={currentPagePokemon} />
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={viewMode}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
+              >
+                {viewMode === "grid" ? (
+                  <PokemonGrid names={currentPagePokemon} />
+                ) : (
+                  <ListView names={currentPagePokemon} />
+                )}
+              </motion.div>
+            </AnimatePresence>
             <Pagination page={page} totalPages={totalPages} onPage={setPage} />
           </>
         )}

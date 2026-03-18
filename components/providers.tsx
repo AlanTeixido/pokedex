@@ -1,5 +1,7 @@
 "use client";
 import { SWRConfig } from "swr";
+import { ThemeProvider } from "./ThemeProvider";
+import { FavoritesProvider } from "./FavoritesProvider";
 
 const fetcher = (url: string) =>
   fetch(url).then((r) => {
@@ -18,7 +20,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
         errorRetryCount: 3,
       }}
     >
-      {children}
+      <ThemeProvider>
+        <FavoritesProvider>
+          {children}
+        </FavoritesProvider>
+      </ThemeProvider>
     </SWRConfig>
   );
 }

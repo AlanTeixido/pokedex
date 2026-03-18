@@ -15,6 +15,12 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://pokedex.alanteixido.dev",
   },
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Pokédex",
+  },
   openGraph: {
     title: "Pokédex | Built by Alan Teixidó",
     description:
@@ -37,7 +43,20 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className="min-h-screen flex flex-col" style={{ background: "var(--bg-primary)" }}>
+      <head>
+        {/* Anti-FOUC: apply theme class before paint */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('theme');if(t==='light'){document.documentElement.classList.remove('dark');document.documentElement.classList.add('light');}}catch(e){}})();`,
+          }}
+        />
+        <meta name="theme-color" content="#6366f1" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+      </head>
+      <body
+        className="min-h-screen flex flex-col"
+        style={{ background: "var(--bg-primary)" }}
+      >
         <Providers>
           <Navbar />
           <main className="flex-1 pt-16">{children}</main>
