@@ -33,11 +33,14 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-function DetailCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+function DetailCard({ children, className = "", accentHex }: { children: React.ReactNode; className?: string; accentHex?: string }) {
   return (
     <div
       className={`p-5 rounded-2xl ${className}`}
-      style={{ background: "rgba(13,18,32,0.6)", border: "1px solid rgba(255,255,255,0.07)" }}
+      style={{
+        background: "rgba(13,18,32,0.6)",
+        border: `1px solid ${accentHex ? `${accentHex}18` : "rgba(255,255,255,0.07)"}`,
+      }}
     >
       {children}
     </div>
@@ -130,15 +133,22 @@ export default function PokemonDetailPage() {
       className="min-h-screen page-enter"
       style={{ background: "var(--bg-primary)" }}
     >
-      {/* Hero gradient */}
+      {/* Hero gradient — full-width type colour wash */}
       <div
         className="absolute inset-0 pointer-events-none overflow-hidden"
-        style={{ height: "50vh", maxHeight: 600 }}
+        style={{ height: "60vh", maxHeight: 640 }}
       >
         <div
-          className="absolute inset-0 opacity-15"
+          className="absolute inset-0 opacity-20"
           style={{
-            background: `radial-gradient(ellipse at 50% 0%, ${primaryColor?.hex ?? "#6366f1"} 0%, transparent 70%)`,
+            background: `radial-gradient(ellipse at 50% 0%, ${primaryColor?.hex ?? "#6366f1"} 0%, transparent 68%)`,
+          }}
+        />
+        {/* Softer secondary layer for depth */}
+        <div
+          className="absolute inset-0 opacity-8"
+          style={{
+            background: `radial-gradient(ellipse at 30% 50%, ${primaryColor?.hex ?? "#6366f1"} 0%, transparent 60%)`,
           }}
         />
       </div>
@@ -237,9 +247,15 @@ export default function PokemonDetailPage() {
 
             {/* Main sprite */}
             <div className="relative">
+              {/* Outer soft halo */}
               <div
-                className="absolute inset-0 rounded-full blur-3xl opacity-20 animate-pulse-glow"
-                style={{ background: primaryColor?.hex ?? "#6366f1", transform: "scale(0.7)" }}
+                className="absolute inset-[-24px] rounded-full blur-[56px] opacity-15"
+                style={{ background: primaryColor?.hex ?? "#6366f1" }}
+              />
+              {/* Inner pulsing glow disc */}
+              <div
+                className="absolute inset-4 rounded-full blur-2xl opacity-35 animate-pulse-glow"
+                style={{ background: primaryColor?.hex ?? "#6366f1" }}
               />
               <AnimatePresence mode="wait">
                 <motion.div
@@ -365,7 +381,7 @@ export default function PokemonDetailPage() {
           {/* Base Stats */}
           <div>
             <SectionTitle>Base Stats</SectionTitle>
-            <DetailCard>
+            <DetailCard accentHex={primaryColor?.hex}>
               <div className="space-y-3">
                 {pokemon.stats.map((s, i) => (
                   <StatBar
@@ -412,7 +428,11 @@ export default function PokemonDetailPage() {
         {evolutionChain && (
           <div className="mb-8">
             <SectionTitle>Evolution Chain</SectionTitle>
-            <EvolutionChainDisplay chain={evolutionChain.chain} currentName={pokemon.name} />
+            <EvolutionChainDisplay
+              chain={evolutionChain.chain}
+              currentName={pokemon.name}
+              primaryTypeHex={primaryColor?.hex}
+            />
           </div>
         )}
 

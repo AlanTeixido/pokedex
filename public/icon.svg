@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="96" fill="#080b14"/>
+  <!-- Pokeball top half (red/indigo gradient) -->
+  <clipPath id="top-clip">
+    <rect x="56" y="56" width="400" height="200"/>
+  </clipPath>
+  <circle cx="256" cy="256" r="200" fill="#6366f1" clip-path="url(#top-clip)"/>
+  <!-- Pokeball bottom half -->
+  <clipPath id="bot-clip">
+    <rect x="56" y="256" width="400" height="200"/>
+  </clipPath>
+  <circle cx="256" cy="256" r="200" fill="#1e1b4b" clip-path="url(#bot-clip)"/>
+  <!-- Center band -->
+  <rect x="56" y="236" width="400" height="40" fill="#111827"/>
+  <!-- Center button outer -->
+  <circle cx="256" cy="256" r="52" fill="#111827"/>
+  <!-- Center button inner -->
+  <circle cx="256" cy="256" r="36" fill="#6366f1"/>
+  <!-- Shine -->
+  <circle cx="244" cy="244" r="14" fill="rgba(255,255,255,0.25)"/>
+</svg>
